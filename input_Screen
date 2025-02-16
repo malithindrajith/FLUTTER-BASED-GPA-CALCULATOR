@@ -1,0 +1,120 @@
+ import 'package:flutter/material.dart';
+import 'result_screen.dart';
+
+class InputScreen extends StatefulWidget {
+  @override
+  _InputScreenState createState() => _InputScreenState();
+}
+
+class _InputScreenState extends State<InputScreen> {
+  final _formKey = GlobalKey<FormState>();
+  List<Map<String, dynamic>> courses = List.generate(6, (index) => {
+    'name': '',
+    'credits': 0,
+    'grade': 'A'
+  });
+
+  final List<String> grades = ['A', 'B', 'C', 'D', 'F'];
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      double totalCredits = 0;
+      double totalGradePoints = 0;
+
+      for (var course in courses) {
+        int credits = course['credits'];
+        String grade = course['grade'];
+        double gradePoint = _getGradePoint(grade);
+        totalCredits += credits;
+        totalGradePoints += credits * gradePoint;
+      }
+
+      double gpa = totalGradePoints / totalCredits;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(gpa: gpa),
+      );
+    }
+  }
+
+  double _getGradePoint(String grade) {
+    switch (grade) {
+      case 'A': return 4.0;
+      case 'B': return 3.0;
+      case 'C': return 2.0;
+      case 'D': return 1.0;
+      case 'F': return 0.0;
+      default: return 0.0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('GPA Calculator'),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: List.generate(courses.length, (index) {
+              return Column(
+                children: [
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Course ${index + 1} Name'),
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Please enter course name';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      courses[index]['name'] = value;
+                    },
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(labelText: 'Course ${index + 1} Credits'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Please enter credits';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      courses[index]['credits'] = int.parse(value!);
+                    },
+                  ),
+                  DropdownButtonFormField(
+                    value: courses[index]['grade'],
+                    items: grades.map((grade) {
+                      return DropdownMenuItem(
+                        value: grade,
+                        child: Text(grade),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        courses[index]['grade'] = value;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 20),
+                ],
+              );
+            }),
+            ElevatedButton(
+              onPressed: _submitForm,
+              child: Text('Calculate GPA'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
